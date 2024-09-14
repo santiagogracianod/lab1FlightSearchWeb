@@ -1,4 +1,4 @@
-"use client"; // Esto convierte este archivo en un Client Component
+"use client";
 
 import { useState } from "react";
 import axios from "axios";
@@ -19,7 +19,12 @@ interface Flight {
   origin: string;
   destination: string;
   date: string;
-  price: number;
+  econ_price: number;
+  busi_price: number;
+  scale: boolean|string,
+  airline: string,
+  econ_avaib_seats: number,
+  busi_avaib_seats: number
 }
 
 export default function Home() {
@@ -28,18 +33,23 @@ export default function Home() {
   const [filters, setFilters] = useState({
     origin: false,
     destination: false,
-    maxPrice: false,
+    scale: false,
+    airline: false
   });
   const [filterValues, setFilterValues] = useState({
     origin: "",
     destination: "",
-    maxPrice: "",
+    scale: false,
+    airline: ""
   });
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleCheckboxChange = (e: any) => {
     setFilters({ ...filters, [e.target.name]: e.checked });
+    if (e.target.name == "scale"){
+      setFilterValues({ ...filterValues, [e.target.name]: e.checked });
+    }
   };
 
   const handleInputChange = (e: any) => {
@@ -55,9 +65,17 @@ export default function Home() {
           endDate: endDate?.toISOString().split('T')[0],
           origin: filters.origin ? filterValues.origin : undefined,
           destination: filters.destination ? filterValues.destination : undefined,
-          maxPrice: filters.maxPrice ? parseFloat(filterValues.maxPrice) : undefined,
+          scale: filters.scale ? filterValues.scale : false,
+          airline: filters.airline ? filterValues.airline : undefined
         }
       });
+      response.data.forEach((e)=>{
+        if(e.scale){
+          e.scale="Yes";
+        } else {
+          e.scale="No";
+        }
+      })
       setFlights(response.data);
     } catch (error) {
       console.error('Error al buscar vuelos:', error);
@@ -67,8 +85,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-5">
-      <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-5 w-screen">
+      <div className="bg-white shadow-lg rounded-lg p-8 w-3/4">
         <h2 className="text-2xl font-semibold text-center mb-6">Flight search</h2>
 
         {/* Fechas */}
@@ -148,26 +166,38 @@ export default function Home() {
 
           <div>
             <Checkbox
-              inputId="filterMaxPrice"
-              name="maxPrice"
-              checked={filters.maxPrice}
+              inputId="filterScale"
+              name="scale"
+              checked={filters.scale}
               onChange={handleCheckboxChange}
             />
-            <label htmlFor="filterMaxPrice" className="ml-2 text-sm font-medium">
-              Filter by Max Price
+            <label htmlFor="filterScale" className="ml-2 text-sm font-medium">
+              Show flights with scale
             </label>
-            {filters.maxPrice && (
+          </div>
+
+
+          <div>
+            <Checkbox
+              inputId="filterAirline"
+              name="airline"
+              checked={filters.airline}
+              onChange={handleCheckboxChange}
+            />
+            <label htmlFor="filterAirline" className="ml-2 text-sm font-medium">
+              Filter by Airline
+            </label>
+            {filters.airline && (
               <input
-                name="maxPrice"
-                value={filterValues.maxPrice}
+                name="airline"
+                value={filterValues.airline}
                 onChange={handleInputChange}
-                placeholder="Enter max price"
+                placeholder="Enter airline"
                 className="w-full mt-2 p-inputtext p-component"
               />
             )}
           </div>
         </div>
-
         {/* Botón de búsqueda */}
         <Button label="Search" icon="pi pi-search" onClick={handleSearch} className="w-full mt-6 p-button" disabled={loading} />
 
@@ -181,7 +211,12 @@ export default function Home() {
               <Column field="origin" header="Origin" />
               <Column field="destination" header="Destination" />
               <Column field="date" header="Date" />
-              <Column field="price" header="Price" />
+              <Column field="econ_price" header="Economic Price" />
+              <Column field="busi_price" header="Business Price" />
+              <Column field="scale" header="Scale" />
+              <Column field="airline" header="Airline" />
+              <Column field="econ_avaib_seats" header="Economic Seats" />
+              <Column field="busi_avaib_seats" header="Business Seats" />
             </DataTable>
           </div>
         )}
